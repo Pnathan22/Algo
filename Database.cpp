@@ -36,3 +36,6 @@ int  Database::getLongestSeq()
 	return longestSeq;
 }
 
+Sequence Database::seekSequence()
+{
+}

@@ -23,3 +23,7 @@ string Sequence::getDescription()
 {
 	return description;
 }	
+
+int Sequence::compareTo(Sequence seq)
+{
+}

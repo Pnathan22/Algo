@@ -14,4 +14,5 @@ public:
 	string getName();
 	int getLenght();
 	string getDescription();
+	int compareTo(Sequence seq);
 };

@@ -1,4 +1,7 @@
 #include <string>
+#include "sequence.h"
+
+using namespace std;
 
 class Database 
 {
@@ -16,4 +19,5 @@ public:
 	int getResiduesSize();
 	int getSequenceSize();
 	int getLongestSeq();
+	Sequence seekSequence();
 }:
