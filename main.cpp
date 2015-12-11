@@ -11,6 +11,7 @@ TODO:Score matrix
 int gapOpenPenalty;
 int gapExtensionPenalty;
 Sequence query;
+Database databse;
 
 int main(int argc, char *argv[]) 
 {
