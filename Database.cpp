@@ -2,13 +2,15 @@
 
 using namespace std;
 
-Database::Database(string fileName, string title, int residuesSize, int sequenceSize, int longestSeq)
+Database::Database(ifstream file)
 {
-	fileName = fileName;
-	title = title;
-	residuesSize = residuesSize;
-	sequenceSize = sequenceSize;
-	longestSeq = longestSeq;
+	file.seekg(0, file.end);
+	length = file.tellg();
+	file.seekg(0, file.beg);
+	unsigned char* buffer = new unsigned char[length];
+	file.read((char*)buffer, length);
+
+	
 }
 
 string Database::getFileName()

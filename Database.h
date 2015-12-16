@@ -1,5 +1,9 @@
 #include <string>
-#include "sequence.h"
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include "Sequence.h"
 
 using namespace std;
 
@@ -11,13 +15,16 @@ private:
 	int residuesSize;
 	int sequenceSize;
 	int longestSeq;	
-
+	vector<unsigned long> headerOffsets;
+	vector<unsigned long> seqOffsets;
 public:
-	Database(string fileName, string title, int residuesSize, int sequenceSize, int longestSeq);
+	Database(ifstream file);
 	string getFileName();
 	string getTitle();
 	int getResiduesSize();
 	int getSequenceSize();
 	int getLongestSeq();
+	vector<unsigned long> getHeaderOffsets();
+	vector<unsigned long> getSeqOffsets();
 	Sequence seekSequence();
 }:

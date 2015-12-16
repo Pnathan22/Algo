@@ -143,10 +143,11 @@ int main()
 		file.seekg(0, file.beg);
 		unsigned char* buffer = new unsigned char[length];
 		file.read((char*)buffer, length);
-
-		for(int j = 4; j<8; j++)
-			data_buf[j-4]= buffer[j];
-		cursor = 8;	
+		
+		cursor = 4;
+		for(int j = cursor; j<cursor+4; j++)
+			data_buf[j-cursor]= buffer[j];
+		cursor += 4;	
 		unsigned long data_type  = decode32(data_buf);	
 		if(data_type == 1)
 		{
@@ -236,7 +237,7 @@ int main()
 		unsigned char* buffer = new unsigned char[length];
 		file3.read((char*)buffer, length);
 		
-		if(get_header(buffer, 0) >= 0)
+		if(get_header(buffer,(int)header_offsets[0] ) >= 0)
 			cout << "coooooool" << endl;
 		else
 			cout << "fuuuuuuuck" << endl;
