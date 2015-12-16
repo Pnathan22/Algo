@@ -5,7 +5,7 @@
 #include <vector>
 #include <stdio.h>
 #include <math.h>
-#include <inttypes.h>
+
 
 using namespace std;
 
@@ -16,6 +16,8 @@ string title;
 int cursor;
 vector<unsigned long> header_offsets;
 vector<unsigned long> seq_offsets;
+vector<unsigned char> int_buf;
+
 
 unsigned long decode32(unsigned char* buf)
 {	
@@ -27,9 +29,112 @@ unsigned long decode64(unsigned char* buf)
 	return (unsigned long)buf[0] + pow(16,2)*(unsigned long)buf[1] + pow(16,4)*(unsigned long)buf[2] + pow(16,6)*(unsigned long)buf[3] + pow(16,8)*(unsigned long)buf[4] + pow(16,10)*(unsigned long)buf[5] + pow(16,12)*(unsigned long)buf[6] + pow(16,14)*(unsigned long)buf[7];
 }
 
+unsigned long decode_any(vector<unsigned char> buf)
+{
+	unsigned long result = 0;
+	int size = buf.size();
+	for(int i=0; i<size;i++)
+		result += buf[size-1-i]*pow(16,2*i);
+	return result;	
+}
+
+char get_residue(unsigned int value)
+{
+	if(value > 27)
+		return '-';
+	else
+	{
+		char residues[] = "-ABCDEFGHIKLMNPQRSTVWXYZU*OJ";
+	return residues[value];
+	}
+}
+
+int check_end(unsigned char* buffer, int cursor)
+{
+	return (unsigned int)buffer[cursor]+(unsigned int)buffer[cursor+1];
+}
+
+int get_header(unsigned char* buffer, int pos)
+{
+	if(pos >= 0)
+	{
+		int cursor = pos;
+		unsigned int int_length; 
+		unsigned long string_length;
+		unsigned int nb_byte;
+
+		if((unsigned int)buffer[cursor] == 2)
+		{
+			cursor++;
+			int_length = (unsigned int)buffer[cursor];
+			cursor++;
+			for(int j=cursor;j<cursor+int_length; j++)
+				int_buf.push_back(buffer[j]);
+			cursor += int_length;
+			unsigned long number = decode_any(int_buf);
+			int_buf.clear();
+			cout << number << endl;
+			return cursor;
+		}
+		else if((unsigned int)buffer[cursor] == 26)
+		{
+			cursor++;
+			string word = "";
+			if((unsigned int)buffer[cursor] <= 128)
+			{
+				string_length = (unsigned long)buffer[cursor];
+				cursor++;
+			}
+			else
+			{
+				nb_byte = (unsigned int)buffer[cursor]-128;
+				cursor++;
+				for(int j=cursor;j<cursor+nb_byte; j++)
+					int_buf.push_back(buffer[j]);
+				cursor += nb_byte;
+				string_length = decode_any(int_buf);
+				int_buf.clear();
+			}	
+			for(int j=cursor;j<(cursor+string_length); j++)
+				 word += buffer[j];
+			cursor += string_length;
+			cout << word << endl;
+			return cursor;
+		}
+		else if(((unsigned int)buffer[cursor] == 48) && ((unsigned int)buffer[cursor+1] == 128))
+		{
+			cursor +=  2;
+			cursor = get_header(buffer, cursor);
+			if(check_end(buffer, cursor) == 0)
+				return cursor+2;
+			else
+				return -1;
+		}
+		else if(((unsigned int)buffer[cursor] >= 160) && ((unsigned int)buffer[cursor+1] == 128))
+		{
+			cursor += 2;
+			cursor =  get_header(buffer, cursor);
+			if((check_end(buffer, cursor) == 0) && (check_end(buffer, cursor+2) == 0))
+				return cursor+2;
+			else if(check_end(buffer, cursor) == 0)
+				return get_header(buffer, cursor+2);
+			else 
+				return -1;
+		}
+		else
+			return -1;
+	}
+	else
+		return -1;	
+		
+}
+
 int main()
 {
 	ifstream file("/home/student/Documents/algo/uniprot_sprot.fasta.pin", ios::binary);
+	ifstream file2("/home/student/Documents/algo/uniprot_sprot.fasta.psq", ios::binary);
+	ifstream file3("/home/student/Documents/algo/uniprot_sprot.fasta.phr", ios::binary);
+
 	
 	if(file)
 	{
@@ -91,9 +196,52 @@ int main()
 				}
 			}
 			cursor += (4+4*seq_nb);
+			cout << header_offsets[25] <<endl;
+			cout << seq_offsets[48] << endl;
 
 			
 		}
 		
 	}
+	if(file2)
+	{
+		vector<string> sequences;
+		string string_buf = "";
+		file2.seekg(0, file2.end);
+		length = file2.tellg();
+		file2.seekg(0, file2.beg);
+		unsigned char* buffer = new unsigned char[length];
+		file2.read((char*)buffer, length);
+		
+		for(int j=0;j<length;j++)
+		{
+			if((unsigned int)buffer[j] != 0)
+				string_buf += get_residue((unsigned int)buffer[j]);
+			else
+			{
+				sequences.push_back(string_buf);
+				string_buf = "";
+			}
+		}
+		
+		cout << sequences[5] << endl;
+		cout << sequences[258] << endl;
+
+	}
+	if(file3)
+	{
+		file3.seekg(0, file3.end);
+		length = file3.tellg();
+		file3.seekg(0, file3.beg);
+		unsigned char* buffer = new unsigned char[length];
+		file3.read((char*)buffer, length);
+		
+		if(get_header(buffer, 0) >= 0)
+			cout << "coooooool" << endl;
+		else
+			cout << "fuuuuuuuck" << endl;
+
+	}
+
+
 }		
