@@ -14,5 +14,8 @@ public:
 	string getName();
 	int getLenght();
 	string getDescription();
+	void SetName(string name);
+	void SetLenght(int lenght);
+	void SetDescription(string description);
 	int compareTo(Sequence seq);
 };
