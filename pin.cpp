@@ -129,6 +129,72 @@ int get_header(unsigned char* buffer, int pos)
 		
 }
 
+vector<unsigned long> get_pin(unsigned char* buffer)
+{
+	unsigned char data_buf[4];
+	unsigned char big_data_buf[8];
+	string title;
+	vector<unsigned long> header_offsets;
+	vector<unsigned long> seq_offsets;
+
+	int cursor = 4;
+	for(int j = cursor; j<cursor+4; j++)
+		data_buf[j-cursor]= buffer[j];
+	cursor += 4;	
+	unsigned long data_type  = decode32(data_buf);	
+	if(data_type == 1)
+	{
+		for(int j = cursor; j<cursor+4; j++)
+			data_buf[j-cursor]= buffer[j];
+		cursor += 4;
+		unsigned long title_length = decode32(data_buf);
+		for(int j = cursor; j<cursor+title_length; j++)
+			title += buffer[j];
+		cursor += title_length;
+		for(int j = cursor; j<cursor+4; j++)
+			data_buf[j-cursor]= buffer[j];	
+		unsigned long timestamp_length = decode32(data_buf);
+		cursor += (4+timestamp_length);
+		for(int j = cursor; j<cursor+4; j++)
+			data_buf[j-cursor]= buffer[j];
+		cursor += 4;	
+		unsigned long seq_nb = decode32(data_buf);
+		for(int j = cursor; j<cursor+8; j++)
+			big_data_buf[j-cursor] = buffer[j];
+		cursor += 8;
+		unsigned long residue_nb = decode64(big_data_buf);	
+		for(int j = cursor; j<cursor+4; j++)
+			data_buf[j-cursor] = buffer[j];
+		cursor += 4;
+		unsigned long max_seq = decode32(data_buf);
+		int cursor_aux = 0;
+		for(int j = cursor; j<cursor+4+(4*seq_nb); j++)
+		{
+			data_buf[cursor_aux] = buffer[j];
+			cursor_aux++;
+			if(cursor_aux >3)
+			{
+				cursor_aux = 0;
+				header_offsets.push_back(decode32(data_buf));
+			}
+		}
+		cursor += (4+4*seq_nb);
+		for(int j = cursor; j<cursor+4+(4*seq_nb); j++)
+		{
+			data_buf[cursor_aux] = buffer[j];
+			cursor_aux++;
+			if(cursor_aux >3)
+			{
+				cursor_aux = 0;
+				seq_offsets.push_back(decode32(data_buf));
+			}
+		}
+		cursor += (4+4*seq_nb);
+		cout << header_offsets[25] <<endl;
+		cout << seq_offsets[48] << endl;
+		return header_offsets;
+	}	
+}
 int main()
 {
 	ifstream file("/home/student/Documents/algo/uniprot_sprot.fasta.pin", ios::binary);
@@ -144,64 +210,7 @@ int main()
 		unsigned char* buffer = new unsigned char[length];
 		file.read((char*)buffer, length);
 		
-		cursor = 4;
-		for(int j = cursor; j<cursor+4; j++)
-			data_buf[j-cursor]= buffer[j];
-		cursor += 4;	
-		unsigned long data_type  = decode32(data_buf);	
-		if(data_type == 1)
-		{
-			for(int j = cursor; j<cursor+4; j++)
-				data_buf[j-cursor]= buffer[j];
-			cursor += 4;
-			unsigned long title_length = decode32(data_buf);
-			for(int j = cursor; j<cursor+title_length; j++)
-				title += buffer[j];
-			cursor += title_length;
-			for(int j = cursor; j<cursor+4; j++)
-				data_buf[j-cursor]= buffer[j];	
-			unsigned long timestamp_length = decode32(data_buf);
-			cursor += (4+timestamp_length);
-			for(int j = cursor; j<cursor+4; j++)
-				data_buf[j-cursor]= buffer[j];
-			cursor += 4;	
-			unsigned long seq_nb = decode32(data_buf);
-			for(int j = cursor; j<cursor+8; j++)
-				big_data_buf[j-cursor] = buffer[j];
-			cursor += 8;
-			unsigned long residue_nb = decode64(big_data_buf);	
-			for(int j = cursor; j<cursor+4; j++)
-				data_buf[j-cursor] = buffer[j];
-			cursor += 4;
-			unsigned long max_seq = decode32(data_buf);
-			int cursor_aux = 0;
-			for(int j = cursor; j<cursor+4+(4*seq_nb); j++)
-			{
-				data_buf[cursor_aux] = buffer[j];
-				cursor_aux++;
-				if(cursor_aux >3)
-				{
-					cursor_aux = 0;
-					header_offsets.push_back(decode32(data_buf));
-				}
-			}
-			cursor += (4+4*seq_nb);
-			for(int j = cursor; j<cursor+4+(4*seq_nb); j++)
-			{
-				data_buf[cursor_aux] = buffer[j];
-				cursor_aux++;
-				if(cursor_aux >3)
-				{
-					cursor_aux = 0;
-					seq_offsets.push_back(decode32(data_buf));
-				}
-			}
-			cursor += (4+4*seq_nb);
-			cout << header_offsets[25] <<endl;
-			cout << seq_offsets[48] << endl;
-
-			
-		}
+		header_offsets = get_pin(buffer);
 		
 	}
 	if(file2)
